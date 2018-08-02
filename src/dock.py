@@ -1,44 +1,47 @@
 #!/usr/bin/env python
 import rospy
 import actionlib
-from sensor_msgs.msg import Joy
+import sys
+from geometry_msgs.msg import PoseStamped
 from fetch_auto_dock_msgs.msg import DockAction, DockGoal
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-class DockExample:
-
+class Dock:
     def __init__(self):
         # Create an action client
-        rospy.loginfo("Connecting to the docking action server...")
-        self.client = actionlib.SimpleActionClient("/dock", DockAction)
-        self.client.wait_for_server()
+        rospy.loginfo("Connecting to the action servers...")
+        self.dock_client = actionlib.SimpleActionClient("/dock", DockAction)
+        self.dock_client.wait_for_server()
+        self.move_client = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+        self.move_client.wait_for_server()
         rospy.loginfo("Done!");
 
-        self.dock_button = rospy.get_param("~dock_button", 13) # Circle button
-        self.pressed = False
-        self.pressed_last = None
-        self.joy_sub = rospy.Subscriber("joy", Joy, self.joy_callback)
+        self.navigate()
 
-    def joy_callback(self, msg):
-        try:
-            if msg.buttons[self.dock_button] > 0:
-                if not self.pressed:
-                    self.pressed_last = rospy.Time.now()
-                    self.pressed = True
-                elif self.pressed_last and rospy.Time.now() > self.pressed_last + rospy.Duration(1.0):
-                    self.do_action()
-                    self.pressed_last = None
-        except IndexError:
-            rospy.logwarn("Button out of range")
+    def navigate(self):
+        home = MoveBaseGoal()
+        home.target_pose.header.frame_id = "map"
+        home.target_pose.header.stamp = rospy.Time.now()
+        home.target_pose.pose.position.x = 8.601
+        home.target_pose.pose.position.y = -25.801
+        home.target_pose.pose.position.z = 0
+        home.target_pose.pose.orientation.w = 0.985
+        home.target_pose.pose.orientation.x = 0
+        home.target_pose.pose.orientation.y = 0
+        home.target_pose.pose.orientation.z = 0.173
+        self.move_client.send_goal(home)
+        self.move_client.wait_for_result()
+        print "Navigation done!"
+        self.dock()
 
-    def do_action(self):
-        # Create and send a goal
+    def dock(self):
         goal = DockGoal()
-        # goal.dock_pose.header.frame_id = "base_link"
-        # goal.dock_pose.pose.position.x = 0.5
-        # goal.dock_pose.pose.orientation.z = -1.0
-        client.send_goal(goal)
+        goal.dock_pose.header.frame_id = "base_link"
+        self.dock_client.send_goal(goal)
+        print "Docking done!"
+        sys.exit()
 
 if __name__ == "__main__":
-    rospy.init_node("docking_example")
-    c = DockExample()
+    rospy.init_node("docking")
+    dock = Dock()
     rospy.spin()
