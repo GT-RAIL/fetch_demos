@@ -1,0 +1,8 @@
+<launch>
+	<!-- <param name="footprint" value="[ [0.5, 0.5], [-0.5, 0.5], [-0.5, -0.5], [0.5, -0.5] ]" /> -->
+	<include file="$(find fetch_navigation)/launch/fetch_nav.launch" >
+		<arg name="map_file" value="$(find fetch_demo)/maps/map.yaml" />
+		<!-- <arg name="map_keepout_file" value="$(find fetch_demo)/maps/keepout.yaml" />
+		<arg name="use_keepout" value="true" /> -->
+	</include>
+</launch>

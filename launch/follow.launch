@@ -1,0 +1,9 @@
+<launch>
+	<include file="$(find fetch_demo)/launch/face_detector.launch"/>
+
+	<include file="$(find map_laser)/lfilter.launch"/>
+	
+	<include file="$(find leg_tracker)/launch/joint_leg_tracker.launch"/>
+
+	<node name="follow" pkg="fetch_demo" type="follow.py" output="screen" />
+</launch>
