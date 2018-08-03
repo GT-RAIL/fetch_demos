@@ -22,6 +22,9 @@ class Dock:
         home = MoveBaseGoal()
         home.target_pose.header.frame_id = "map"
         home.target_pose.header.stamp = rospy.Time.now()
+        # Must be updated to reflect dock position in current map
+        # Up-to-date for map.pgm with SHA256 hash:
+        # 48ad6b43d09cca62be72219b851db572062d18231da29ae27481495762f2dbba
         home.target_pose.pose.position.x = 8.601
         home.target_pose.pose.position.y = -25.801
         home.target_pose.pose.position.z = 0

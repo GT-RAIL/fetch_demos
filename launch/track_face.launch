@@ -37,6 +37,6 @@
 		<arg name="approximate_sync" value="true" />
 	</include>
 
-	<node name="follow_face" pkg="fetch_demo" type="follow_face.py" output="screen" />
+	<node name="track_face" pkg="fetch_demo" type="track_face.py" output="screen" />
 
 </launch>

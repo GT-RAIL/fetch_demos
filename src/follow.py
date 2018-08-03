@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
-from threading import Lock
-
 import rospy
 import actionlib
 import time
 
 from tf.listener import TransformListener
 from tf.broadcaster import TransformBroadcaster
-from tf.transformations import quaternion_matrix
 from tf2_py import ExtrapolationException
 
 from actionlib_msgs.msg import GoalStatus, GoalStatusArray
@@ -22,7 +19,7 @@ from leg_tracker.msg import Person, PersonArray
 from visualization_msgs.msg import Marker
 import math
 
-class FollowFace:
+class Follow:
 
     def __init__(self):
         self.moving = False
@@ -50,7 +47,6 @@ class FollowFace:
         self.marker = None
         self.last_processed = 0
 
-    # For collision avoidance (not working right now)
     def laserCallback(self, msg):
         pos = self.controllerPosition
 
@@ -95,7 +91,8 @@ class FollowFace:
             cmd.linear.x = -0.3
             self.cmdvel.publish(cmd)
             if self.controllerID is not None or self.controllerPosition is not None:
-                print("Killed controller due to obstacle")
+                print("Temporarily killed controller due to obstacle")
+                # For permanent killing of controller
                 # self.controllerID = None
                 # self.controllerPosition = None
         else:
@@ -141,20 +138,6 @@ class FollowFace:
                     cmd.angular.z = angle / 50
                 self.cmdvel.publish(cmd)
 
-                # marker = Marker()
-                # marker.header.frame_id = pos.header.frame_id
-                # marker.type = marker.SPHERE
-                # marker.action = marker.ADD
-                # marker.scale.x = 0.2
-                # marker.scale.y = 0.2
-                # marker.scale.z = 0.2
-                # marker.color.a = 1.0
-                # marker.color.r = 1.0
-                # marker.color.g = 1.0
-                # marker.color.b = 0.0
-                # marker.pose.orientation.w = 1.0
-                # marker.pose.position = pos.point
-                # self.marker = marker
         if self.controllerID is not None and not controllerFound:
             print("Killed controller")
             self.controllerID = None
@@ -200,25 +183,6 @@ class FollowFace:
             else:
                 print("No controller because closest distance was {}".format(closestDistance))
 
-        # Marker stuff
-        # marker = Marker()
-        # marker.header.frame_id = pos.header.frame_id
-        # marker.type = marker.SPHERE
-        # marker.action = marker.ADD
-        # marker.scale.x = 0.2
-        # marker.scale.y = 0.2
-        # marker.scale.z = 0.2
-        # marker.color.a = 1.0
-        # marker.color.r = 1.0
-        # marker.color.g = 1.0
-        # marker.color.b = 0.0
-        # marker.pose.orientation.w = 1.0
-        # marker.pose.position.x = pos.point.x
-        # marker.pose.position.y = pos.point.y
-        # marker.pose.position.z = pos.point.z
-        # self.marker = marker
-        ###
-
         #self.client.cancel_all_goals()
         distance = 999999999
         if self.lastHeadTarget is not None:
@@ -258,6 +222,6 @@ class FollowFace:
             rospy.sleep(0.1)
 
 if __name__=="__main__":
-    rospy.init_node("follow_face_node")
-    h = FollowFace()
+    rospy.init_node("follow_node")
+    h = Follow()
     h.loop()
