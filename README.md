@@ -24,7 +24,7 @@ When done mapping, save the map with:
 
 The map saver will create two files in the specified map_directory. The directory must already exist. The two files are map_name.pgm and map_name.yaml. The first is the map in a .pgm image format, and the second is a YAML file that specifies metadata for the image.
 
-The built-in `build_map.launch` file recommended by the Fetch documentation uses a SLAM library prone to crashing when completing loops. Switching SLAM libraries to `gmapping` fixes this issue.
+The `fetch_navigation` provides its own map building launch file but this uses a SLAM library that is prone to crashing. The map building launch file specified here uses a different SLAM library called `gmapping` which fixes this issue.
 
 ### Quickly launching the Fetch navigation stack
 
