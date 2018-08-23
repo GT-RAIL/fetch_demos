@@ -16,7 +16,7 @@ Prerequisites:
 
 Running:
 
-`roslaunch fetch_demo build_map.launch`
+`roslaunch fetch_demos build_map.launch`
 
 When done mapping, save the map with:
 
@@ -30,7 +30,7 @@ The `fetch_navigation` provides its own map building launch file but this uses a
 
 Running:
 
-`roslaunch fetch_demo navigation.launch`
+`roslaunch fetch_demos navigation.launch`
 
 Will bring up essential services and begin publishing the map from `maps/`, laser scanner, and others. A prerequisite for most Fetch tasks. _Ensure that the directory of the map image indicated by `map.yaml` is correct or else the map server will exit early without a message._
 
@@ -43,7 +43,7 @@ Prerequisites:
 - For more information: [see Fetch documentation](http://docs.fetchrobotics.com/docking.html)
 
 Running:
-- `rosrun fetch_demo dock.py`
+- `rosrun fetch_demos dock.py`
 - Will navigate to dock position, begin auto dock procedure, and then exit
 
 ### Run face detection
@@ -52,7 +52,7 @@ Prerequisites:
 - wg-perception's [people library](https://github.com/wg-perception/people): `sudo apt install ros-indigo-people`
 
 Running:
-- `roslaunch fetch_demo face_detector.launch`
+- `roslaunch fetch_demos face_detector.launch`
 - Will bring up a face_detector instance preconfigured and tuned for the Fetch's RGBD camera setup
 - Additional documentation of library: http://wiki.ros.org/face_detector
 
@@ -62,7 +62,7 @@ Prerequisites:
 - wg-perception's [people library](https://github.com/wg-perception/people): `sudo apt install ros-indigo-people`
 
 Running:
-- `roslaunch fetch_demo track_face.launch`
+- `roslaunch fetch_demos track_face.launch`
 - Will run the face detection library and point the Fetch head at the nearest detected face in-frame continuously
 
 ### Follow a user around
@@ -73,9 +73,9 @@ Prerequisites:
     - To just track legs without following people around, run `roslaunch leg_tracker joint_leg_tracker.launch`
     - Documentation of `leg_tracker`: https://github.com/petschekr/leg_tracker
     - This fork configures the leg tracking software for the Fetch's laser scanner and supports OpenCV 2 which is required by other packes on the Fetch platform. The upstream code requires OpenCV 3 which is not currently supported by ROS Indigo on Fetch.
-- Navigation stack must be running (map not required): `roslaunch fetch_demo navigation.launch`
+- Navigation stack must be running (map not required): `roslaunch fetch_demos navigation.launch`
 
 Running:
-- `roslaunch fetch_demo follow.launch`
+- `roslaunch fetch_demos follow.launch`
 
 The following demo tracks faces using the RGBD camera and then matches the nearest detected face to a pair of legs which it then tracks and moves the robot to follow. The wider field of view of the laser scanner allows for reliable person tracking even with multiple people in the same area or for quick movement. The leg tracking library will also predict leg movements if they go behind an obstacle temporarily. This following code implements filtered collision detection that can differentiate between obstacles in the robot's path and legs which should be tracked.
