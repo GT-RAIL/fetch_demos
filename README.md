@@ -5,7 +5,6 @@ _Demos for the [Fetch platform](http://docs.fetchrobotics.com/index.html) at the
 - Building a navigation map
 - Quickly launching the Fetch navigation stack
 - Automatically navigate to the Fetch charging station and begin docking
-- Run face detection
 - Track the head of the Fetch robot to the nearest face
 - Follow a user around using a combination of face and leg tracking data from the RGBD camera and laser scan
 
@@ -46,20 +45,10 @@ Running:
 - `rosrun fetch_demos dock.py`
 - Will navigate to dock position, begin auto dock procedure, and then exit
 
-### Run face detection
-
-Prerequisites:
-- wg-perception's [people library](https://github.com/wg-perception/people): `sudo apt install ros-indigo-people`
-
-Running:
-- `roslaunch fetch_demos face_detector.launch`
-- Will bring up a face_detector instance preconfigured and tuned for the Fetch's RGBD camera setup
-- Additional documentation of library: http://wiki.ros.org/face_detector
-
 ### Track the head of the Fetch robot to the nearest face
 
 Prerequisites:
-- wg-perception's [people library](https://github.com/wg-perception/people): `sudo apt install ros-indigo-people`
+- `rail_face_detection_launch`. We use the Willow Garage face detector by default.
 
 Running:
 - `roslaunch fetch_demos track_face.launch`
