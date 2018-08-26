@@ -60,7 +60,7 @@ class Follow:
         # maxAngleIndex = int(maxAngle / msg.angle_increment + abs(msg.angle_min / msg.angle_increment))
 
         laserPoints = list(msg.ranges) # [minAngleIndex:maxAngleIndex]
-        
+
         collisionScan = LaserScan()
         collisionScan.header = msg.header
         collisionScan.angle_min = msg.angle_min #minAngle
@@ -161,13 +161,13 @@ class Follow:
             if distance < closestDistance:
                 closestFace = pos
                 closestDistance = distance
-        
+
         if closestFace is None:
             return
         goal = PointHeadGoal()
         goal.min_duration = rospy.Duration(0.0)
         goal.target = closestFace
-        
+
         if len(self.people) > 0 and self.safeToTrack:
             closestID = None
             closestDistance = 999999999
