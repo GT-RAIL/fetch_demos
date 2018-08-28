@@ -1,6 +1,6 @@
 <launch>
   <!-- Launch the face detector -->
-	<include file="$(find rail_face_detector_launch)/launch/face_detector.launch">
+	<include file="$(find rail_face_detection_launch)/launch/face_detection.launch">
     <arg name="wg_detector" value="true" />
   </include>
 

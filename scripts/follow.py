@@ -56,7 +56,7 @@ class Follow:
         # maxAngle = min(angle + (arc / 2), msg.angle_max)
         # maxAngleIndex = int(maxAngle / msg.angle_increment + abs(msg.angle_min / msg.angle_increment))
 
-        laserPoints = msg.ranges # [minAngleIndex:maxAngleIndex]
+        laserPoints = list(msg.ranges) # [minAngleIndex:maxAngleIndex]
 
         collisionScan = LaserScan()
         collisionScan.header = msg.header
@@ -74,7 +74,7 @@ class Follow:
             #pointAngle = (i + minAngleIndex) * msg.angle_increment + msg.angle_min
             pointAngle = i * msg.angle_increment + msg.angle_min
             if self.controllerPosition is not None:
-                distanceFromController = math.sqrt((math.cos(pointAngle) * point - pos.point.x) ** 2 + (math.sin(pointAngle) * point - pos.point.y) ** 2)
+                distanceFromController = math.sqrt((math.cos(pointAngle) * point - pos.x) ** 2 + (math.sin(pointAngle) * point - pos.y) ** 2)
                 if distanceFromController < 1:
                     laserPoints[i] = 5
             if point > msg.range_min and point < minDist:
@@ -129,7 +129,7 @@ class Follow:
             # this person is the new controller if they are within 1m of us
             if person_distance <= 1.0:
                 if self.controllerID != person.id:
-                    rospy.loginfo("Setting controller ID to {}".format(self.person.id))
+                    rospy.loginfo("Setting controller ID to {}".format(person.id))
                 self.controllerID = person.id
                 self.controllerPosition = person.pose.position
 
@@ -140,7 +140,7 @@ class Follow:
             # Check to see if we are not in collision. If so, MOVE!!!
             if self.safeToTrack:
                 MAX_SPEED = 0.7
-                cmdvel = Twist()
+                cmd = Twist()
 
                 if person_distance > 1:
                     targetSpeed = 0.15 * person_distance + 0.1
@@ -175,8 +175,8 @@ class Follow:
                     pos.point.x = 1
                     pos.point.y = 0
                 else:
-                    pos.point.x = self.controllerPosition.point.x
-                    pos.point.y = self.controllerPosition.point.y
+                    pos.point.x = self.controllerPosition.x
+                    pos.point.y = self.controllerPosition.y
                 pos.point.z = 1.5
                 goal = PointHeadGoal()
                 goal.min_duration = rospy.Duration(0.5)
