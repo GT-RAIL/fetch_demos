@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, division
+
 import rospy
 import actionlib
-import time
 
 from tf.listener import TransformListener
-from tf.broadcaster import TransformBroadcaster
 from tf2_py import ExtrapolationException
 
 from actionlib_msgs.msg import GoalStatus, GoalStatusArray
 from control_msgs.msg import PointHeadAction, PointHeadGoal
 from geometry_msgs.msg import PointStamped, Twist
 from sensor_msgs.msg import LaserScan
-
-from people_msgs.msg import PositionMeasurementArray
-from leg_tracker.msg import Person, PersonArray
+from rail_people_detection_msgs.msg import Person, DetectionContext
 
 from visualization_msgs.msg import Marker
 import math
@@ -25,21 +23,20 @@ class Follow:
         self.moving = False
 
         self.listener = TransformListener()
-        self.broadcaster = TransformBroadcaster()
 
-        self.client = actionlib.SimpleActionClient("head_controller/point_head", PointHeadAction)
-        self.client.wait_for_server()
+        self.head_client = actionlib.SimpleActionClient("head_controller/point_head", PointHeadAction)
+        self.head_client.wait_for_server()
 
-        self.face_sub = rospy.Subscriber("face_detector/people_tracker_measurements_array", PositionMeasurementArray, self.faceCallback)
-        self.leg_sub = rospy.Subscriber("people_tracked", PersonArray, self.legCallback)
+        self.person_sub = rospy.Subscriber(
+            "rail_people_detector/closest_person", Person, self.personCallback
+        )
         self.laser_sub = rospy.Subscriber("base_scan", LaserScan, self.laserCallback)
         self.laser_pub = rospy.Publisher("collision_scan", LaserScan, queue_size=1)
 
-        self.people = []
         self.controllerID = None
         self.controllerPosition = None
         self.safeToTrack = True
-        self.lastFaceCallback = time.time()
+        self.lastFaceTimestamp = rospy.Time(0)
         self.lastHeadTarget = None
 
         self.debug = rospy.Publisher("follow_face/debug", Marker, queue_size=1)
@@ -59,7 +56,7 @@ class Follow:
         # maxAngle = min(angle + (arc / 2), msg.angle_max)
         # maxAngleIndex = int(maxAngle / msg.angle_increment + abs(msg.angle_min / msg.angle_increment))
 
-        laserPoints = list(msg.ranges) # [minAngleIndex:maxAngleIndex]
+        laserPoints = msg.ranges # [minAngleIndex:maxAngleIndex]
 
         collisionScan = LaserScan()
         collisionScan.header = msg.header
@@ -84,14 +81,14 @@ class Follow:
                 minDist = point
                 minDistAngle = pointAngle
         if minDist < 0.6:
-            print "Minimum distance is {} at {} degrees".format(round(minDist, 3), round(math.degrees(minDistAngle)))
+            rospy.loginfo("Minimum distance is {} at {} degrees".format(round(minDist, 3), round(math.degrees(minDistAngle))))
         if minDist < 0.3:
             self.safeToTrack = False
             cmd = Twist()
             cmd.linear.x = -0.3
             self.cmdvel.publish(cmd)
             if self.controllerID is not None or self.controllerPosition is not None:
-                print("Temporarily killed controller due to obstacle")
+                rospy.loginfo("Temporarily killed controller due to obstacle")
                 # For permanent killing of controller
                 # self.controllerID = None
                 # self.controllerPosition = None
@@ -101,108 +98,75 @@ class Follow:
         collisionScan.ranges = laserPoints
         self.laser_pub.publish(collisionScan)
 
-    def legCallback(self, msg):
-        self.people = []
-        controllerFound = False
-        for person in msg.people:
-            pos = PointStamped()
-            pos.header = msg.header
-            pos.point = person.pose.position
-            try:
-                pos = self.listener.transformPoint("base_link", pos)
-            except ExtrapolationException:
-                return
-            self.people.append((person.id, pos))
+    def personCallback(self, person):
+        # Get the distance of this person from the robot
+        person_distance = math.sqrt(person.pose.position.x ** 2 + person.pose.position.y ** 2)
+        person_angle = math.degrees(math.atan2(person.pose.position.y, person.pose.position.x))
 
-            if person.id == self.controllerID and self.safeToTrack:
-                controllerFound = True
-                self.controllerPosition = pos
+        # First look at the closest person if we know that the person is being
+        # detected using the face detector
+        if person.detection_context.pose_source == DetectionContext.POSE_FROM_FACE:
+            self.lastFaceTimestamp = rospy.Time.now()
 
-                angle = math.degrees(math.atan2(pos.point.y, pos.point.x))
-                distance = math.sqrt((pos.point.x) ** 2 + (pos.point.y) ** 2 + (pos.point.z) ** 2)
-                # Positive to the left
-                # Negative to the right
-                #print("Angle is {}, distance is {}".format(round(angle, 3), round(distance, 3)))
+            # Point to the person if the distance between their current position
+            # and the position we were looking at earlier has changed by more
+            # than 2 cm
+            goal = PointHeadGoal()
+            goal.min_duration = rospy.Duration(0.0)
+            goal.target = PointStamped(header=person.header, point=person.pose.position)
+            head_distance = 999999999
+            if self.lastHeadTarget is not None:
+                head_distance = math.sqrt(
+                    (person.pose.position.x - self.lastHeadTarget.point.x) ** 2
+                    + (person.pose.position.y - self.lastHeadTarget.point.y) ** 2
+                    + (person.pose.position.z - self.lastHeadTarget.point.z) ** 2
+                )
+            if head_distance > 0.02:
+                self.lastHeadTarget = goal.target
+                self.head_client.send_goal(goal)  # It's OK to not wait
 
+            # Regardless of whether they were the original controller or not,
+            # this person is the new controller if they are within 1m of us
+            if person_distance <= 1.0:
+                if self.controllerID != person.id:
+                    rospy.loginfo("Setting controller ID to {}".format(self.person.id))
+                self.controllerID = person.id
+                self.controllerPosition = person.pose.position
+
+        # Then check to see if the person we were tracking still in view.
+        if self.controllerID == person.id:
+            self.controllerPosition = person.pose.position
+
+            # Check to see if we are not in collision. If so, MOVE!!!
+            if self.safeToTrack:
                 MAX_SPEED = 0.7
-                cmd = Twist()
+                cmdvel = Twist()
 
-                if distance > 1:
-                    # Connects (1, 0.25) and (4, 0.7)
-                    targetSpeed = 0.15 * distance + 0.1
+                if person_distance > 1:
+                    targetSpeed = 0.15 * person_distance + 0.1
                     cmd.linear.x = min(targetSpeed, MAX_SPEED)
-                elif distance < 0.7:
+                elif person_distance < 0.7:
                     cmd.linear.x = -0.3
 
-                if abs(angle) > 5:
-                    cmd.angular.z = angle / 50
+                if abs(person_angle) > 5:
+                    cmd.angular.z = person_angle / 50
                 self.cmdvel.publish(cmd)
 
-        if self.controllerID is not None and not controllerFound:
-            print("Killed controller")
+        # Otherwise, we should stop trying to follow the person
+        else:
+            rospy.loginfo("Lost controller {}".format(self.controllerID))
             self.controllerID = None
             self.controllerPosition = None
-
-    def faceCallback(self, msg):
-        self.lastFaceCallback = time.time()
-        # Find closest face to look at
-        closestFace = None
-        closestDistance = 999999999
-        for face in msg.people:
-            pos = PointStamped()
-            pos.header = face.header
-            pos.point = face.pos
-            try:
-                pos = self.listener.transformPoint("base_link", pos)
-            except ExtrapolationException:
-                return
-
-            distance = math.sqrt(pos.point.x ** 2 + pos.point.y ** 2 + pos.point.z ** 2)
-            if distance < closestDistance:
-                closestFace = pos
-                closestDistance = distance
-
-        if closestFace is None:
-            return
-        goal = PointHeadGoal()
-        goal.min_duration = rospy.Duration(0.0)
-        goal.target = closestFace
-
-        if len(self.people) > 0 and self.safeToTrack:
-            closestID = None
-            closestDistance = 999999999
-            for person in self.people:
-                pos = person[1]
-                distance = math.sqrt((pos.point.x - closestFace.point.x) ** 2 + (pos.point.y - closestFace.point.y) ** 2)
-                if distance < closestDistance:
-                    closestID = person[0]
-                    closestDistance = distance
-            if closestDistance < 1:
-                self.controllerID = closestID
-                print("Controller ID is {}".format(self.controllerID))
-            else:
-                print("No controller because closest distance was {}".format(closestDistance))
-
-        #self.client.cancel_all_goals()
-        distance = 999999999
-        if self.lastHeadTarget is not None:
-            distance = math.sqrt(
-                (closestFace.point.x - self.lastHeadTarget.point.x) ** 2 +
-                (closestFace.point.y - self.lastHeadTarget.point.y) ** 2 +
-                (closestFace.point.z - self.lastHeadTarget.point.z) ** 2
-            )
-        if distance > 0.02:
-            self.lastHeadTarget = goal.target
-            self.client.send_goal(goal)
-            self.client.wait_for_result()
 
     def loop(self):
         while not rospy.is_shutdown():
             if self.marker is not None:
                 self.debug.publish(self.marker)
+
             # Reset head if no face found in 1 second
-            if time.time() - self.lastFaceCallback > 1:
+            if rospy.Time.now() - self.lastFaceTimestamp > rospy.Duration(1):
                 self.lastHeadTarget = None
+
                 # Reset head
                 pos = PointStamped()
                 pos.header.stamp = rospy.Time.now()
@@ -217,8 +181,8 @@ class Follow:
                 goal = PointHeadGoal()
                 goal.min_duration = rospy.Duration(0.5)
                 goal.target = pos
-                #self.client.cancel_all_goals()
-                self.client.send_goal(goal)
+                self.head_client.send_goal(goal)
+
             rospy.sleep(0.1)
 
 if __name__=="__main__":
