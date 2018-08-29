@@ -127,11 +127,11 @@ class Follow:
 
             # Regardless of whether they were the original controller or not,
             # this person is the new controller if they are within 1m of us
-            if person_distance <= 1.0:
-                if self.controllerID != person.id:
-                    rospy.loginfo("Setting controller ID to {}".format(person.id))
-                self.controllerID = person.id
-                self.controllerPosition = person.pose.position
+            # if person_distance <= 1.0:
+            if self.controllerID != person.id:
+                rospy.loginfo("Setting controller ID to {}".format(person.id))
+            self.controllerID = person.id
+            self.controllerPosition = person.pose.position
 
         # Then check to see if the person we were tracking still in view.
         if self.controllerID == person.id:
@@ -153,7 +153,7 @@ class Follow:
                 self.cmdvel.publish(cmd)
 
         # Otherwise, we should stop trying to follow the person
-        else:
+        elif self.controllerID is not None:
             rospy.loginfo("Lost controller {}".format(self.controllerID))
             self.controllerID = None
             self.controllerPosition = None
