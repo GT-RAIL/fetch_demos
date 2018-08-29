@@ -1,7 +1,6 @@
 <launch>
   <!-- Launch the face detector -->
-	<include file="$(find rail_face_detection_launch)/launch/face_detection.launch">
-    <arg name="wg_detector" value="true" />
+  <include file="$(find rail_people_detector)/launch/wg_face_detector.launch">
   </include>
 
   <!-- Launch the node to track people's faces -->

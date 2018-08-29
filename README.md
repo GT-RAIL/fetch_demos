@@ -48,7 +48,7 @@ Running:
 ### Track the head of the Fetch robot to the nearest face
 
 Prerequisites:
-- `rail_face_detection_launch`. We use the Willow Garage face detector by default.
+- `rail_people_detector`. We use the Willow Garage face detector by default.
 
 Running:
 - `roslaunch fetch_demos track_face.launch`
@@ -57,12 +57,14 @@ Running:
 ### Follow a user around
 
 Prerequisites:
-- wg-perception's [people library](https://github.com/wg-perception/people): `sudo apt install ros-indigo-people`
-- [Fork of the `leg_tracker` library on the `fetch` branch](https://github.com/petschekr/leg_tracker): download to robot's catkin workspace and build with `catkin_make`
+1. Fork of the [wg-perception's people library](https://github.com/banerjs/people):
+    - The common ROS packages installed with `sudo apt install ros-indigo-people` are missing the launch file that we use on the robot.
+1. Fork of the [`leg_tracker` library on the `fetch` branch](https://github.com/petschekr/leg_tracker): download to robot's catkin workspace and build with `catkin_make`
     - To just track legs without following people around, run `roslaunch leg_tracker joint_leg_tracker.launch`
     - Documentation of `leg_tracker`: https://github.com/petschekr/leg_tracker
     - This fork configures the leg tracking software for the Fetch's laser scanner and supports OpenCV 2 which is required by other packes on the Fetch platform. The upstream code requires OpenCV 3 which is not currently supported by ROS Indigo on Fetch.
-- Navigation stack must be running (map not required): `roslaunch fetch_demos navigation.launch`
+
+The above prerequisites can be obtained by cloning [`rail_people_detection`](https://github.com/GT-RAIL/rail_people_detection/) and initializing the submodules with `git submodule init` and `git submodule update`.
 
 Running:
 - `roslaunch fetch_demos follow.launch`
