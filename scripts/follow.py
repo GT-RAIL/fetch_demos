@@ -112,7 +112,7 @@ class Follow:
             # and the position we were looking at earlier has changed by more
             # than 2 cm
             goal = PointHeadGoal()
-            goal.min_duration = rospy.Duration(0.0)
+            goal.min_duration = rospy.Duration(0.2)
             goal.target = PointStamped(header=person.header, point=person.pose.position)
             head_distance = 999999999
             if self.lastHeadTarget is not None:
@@ -123,7 +123,7 @@ class Follow:
                 )
             if head_distance > 0.02:
                 self.lastHeadTarget = goal.target
-                self.head_client.send_goal(goal)  # It's OK to not wait
+                self.head_client.send_goal(goal)
 
             # Regardless of whether they were the original controller or not,
             # this person is the new controller if they are within 1m of us
