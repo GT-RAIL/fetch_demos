@@ -29,7 +29,7 @@ class FollowFace:
         self.client.wait_for_server()
 
         self.face_sub = rospy.Subscriber("face_detector/people_tracker_measurements_array", PositionMeasurementArray, self.faceCallback)
-        
+
         self.lastFaceCallback = time.time()
         self.lastHeadTarget = None
 
@@ -51,13 +51,13 @@ class FollowFace:
             if distance < closestDistance:
                 closestFace = pos
                 closestDistance = distance
-        
+
         if closestFace is None:
             return
         goal = PointHeadGoal()
         goal.min_duration = rospy.Duration(0.0)
         goal.target = closestFace
-        
+
         distance = 999999999
         if self.lastHeadTarget is not None:
             distance = math.sqrt(

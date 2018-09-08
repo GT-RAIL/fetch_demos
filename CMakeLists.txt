@@ -5,22 +5,25 @@ project(fetch_demos)
 # add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
+  actionlib
   roscpp
   rospy
-  std_msgs
-  genmsg
-  actionlib_msgs
-  actionlib
+  moveit_python
+  tf
 )
-generate_messages(DEPENDENCIES actionlib_msgs)
 
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs std_msgs
+  CATKIN_DEPENDS
+  actionlib
+  roscpp
+  rospy
+  moveit_python
+  tf
 )
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# include_directories(
+#   ${catkin_INCLUDE_DIRS}
+# )
 
 # add_executable(${PROJECT_NAME}_follow src/follow.cpp)
 

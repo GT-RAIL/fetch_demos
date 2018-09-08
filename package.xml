@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>fetch_demos</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>The fetch_demos package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -49,21 +49,19 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>actionlib</build_depend>
-  <build_depend>actionlib_msgs</build_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>actionlib</exec_depend>
-  <exec_depend>actionlib_msgs</exec_depend>
 
+  <depend>actionlib</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>moveit_python</depend>
+  <depend>tf</depend>
+
+  <exec_depend>face_detector</exec_depend>
+  <exec_depend>fetch_auto_dock_msgs</exec_depend>
+  <exec_depend>fetch_navigation</exec_depend>
+  <exec_depend>gmapping</exec_depend>
+  <exec_depend>leg_tracker</exec_depend>
+  <exec_depend>map_laser</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

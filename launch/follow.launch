@@ -1,9 +1,9 @@
 <launch>
-	<include file="$(find fetch_demos)/launch/face_detector.launch"/>
+  <!-- Launch the people detection module -->
+  <include file="$(find rail_people_detector)/launch/closest_person_detection.launch">
+    <arg name="robot_base_frame" value="base_link" />
+  </include>
 
-	<include file="$(find map_laser)/lfilter.launch"/>
-
-	<include file="$(find leg_tracker)/launch/joint_leg_tracker.launch"/>
-
+  <!-- Launch the node to follow people -->
 	<node name="follow" pkg="fetch_demos" type="follow.py" output="screen" />
 </launch>
