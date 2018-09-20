@@ -1,7 +1,8 @@
 <launch>
   <!-- Launch the people detection module -->
   <include file="$(find rail_people_detector)/launch/closest_person_detection.launch">
-    <arg name="robot_base_frame" value="base_link" />
+    <arg name="robot_frame" value="base_link" />
+    <arg name="start_all" value="true" />
   </include>
 
   <!-- Launch the node to follow people -->
